@@ -1,0 +1,17 @@
+# Local research dump (third-party mod sources used for reference)
+research/
+
+# Build artifacts
+*.obj
+*.exe
+*.dll
+*.pdb
+
+# Editor / tooling
+.vs/
+.vscode/
+*.user
+
+# Log / dump files
+*.log
+*.output
