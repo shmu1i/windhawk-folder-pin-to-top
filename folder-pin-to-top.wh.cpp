@@ -2,7 +2,7 @@
 // @id              folder-pin-to-top
 // @name            Pin Folders to Top in File Explorer
 // @description     Right-click any file or folder in File Explorer to pin/unpin it to the top of its parent. Pinned items report a future Date Modified so they sort/group to the top.
-// @version         0.4
+// @version         0.5
 // @author          shmu1i
 // @include         explorer.exe
 // @architecture    x86-64
@@ -264,30 +264,27 @@ bool TryGetHandlePath(HANDLE h, std::wstring& out) {
 // Time spoofing
 // ============================================================================
 
+// Computed fresh on every call (not cached): the pinned timestamp must always
+// be ~7 days ahead of *now*, otherwise a long-running explorer.exe eventually
+// outlives a once-cached value and pinned items sink back into the listing.
 DATE GetPinnedDateModified() {
-    static DATE cached = []() {
-        SYSTEMTIME st;
-        GetLocalTime(&st);
-        DATE d = 0;
-        if (SystemTimeToVariantTime(&st, &d)) return d + 7.0;
-        return 73050.0;
-    }();
-    return cached;
+    SYSTEMTIME st;
+    GetLocalTime(&st);
+    DATE d = 0;
+    if (SystemTimeToVariantTime(&st, &d)) return d + 7.0;
+    return 73050.0;
 }
 
 FILETIME GetPinnedFileTime() {
-    static FILETIME cached = []() {
-        FILETIME ft;
-        GetSystemTimeAsFileTime(&ft);
-        ULARGE_INTEGER ull;
-        ull.LowPart = ft.dwLowDateTime;
-        ull.HighPart = ft.dwHighDateTime;
-        ull.QuadPart += 7ULL * 24 * 60 * 60 * 10000000ULL;
-        ft.dwLowDateTime = ull.LowPart;
-        ft.dwHighDateTime = ull.HighPart;
-        return ft;
-    }();
-    return cached;
+    FILETIME ft;
+    GetSystemTimeAsFileTime(&ft);
+    ULARGE_INTEGER ull;
+    ull.LowPart = ft.dwLowDateTime;
+    ull.HighPart = ft.dwHighDateTime;
+    ull.QuadPart += 7ULL * 24 * 60 * 60 * 10000000ULL;
+    ft.dwLowDateTime = ull.LowPart;
+    ft.dwHighDateTime = ull.HighPart;
+    return ft;
 }
 
 static const PROPERTYKEY PKEY_FindData = {
